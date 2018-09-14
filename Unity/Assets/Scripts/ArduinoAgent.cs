@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Net.Sockets;
+using System.IO;
+using System;
 
 // Class communicating with Arduino using ESP8266espClient 
 public class ArduinoAgent : MonoBehaviour
@@ -45,10 +47,16 @@ public class ArduinoAgent : MonoBehaviour
 	{
 		try {
 			ConnectToEsp(DefaultEspIp, DefaultEspPort);
+
 		}catch(SocketException e) {
 			throw e;
 		}
 
+	}
+
+	public bool IsConnectedWithEsp()
+	{
+		return espClient.IsConnected();
 	}
 
 	public void DisconnectFromEsp()
@@ -64,6 +72,7 @@ public class ArduinoAgent : MonoBehaviour
 	public void Stop()
 	{
 		espClient.Writeln (Commands.Stop);
+
 	}
 
 	public void RotateLeft()

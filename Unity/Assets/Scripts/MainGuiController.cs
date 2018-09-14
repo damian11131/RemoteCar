@@ -12,31 +12,33 @@ public class MainGuiController : MonoBehaviour
 	// Set in UnityEditor
 	public RectTransform upButton;
 	public RectTransform downButton;
-//	public RectTransform wheel;
-	//public TextMeshProUGUI couldNotConnectText;
 	public RectTransform leftButton;
 	public RectTransform rightButton;
-
-	//public Transform gaugeIndicatorContainer;
-	//public GameObject arduinoAgent;
-//	public TextMeshProUGUI batteryText;
-	//public TextMeshProUGUI speedText;
-
-	//RectTransform gaugeIndicator;
-
+	public TextMeshProUGUI statusText;
 
 	public void Start() 
 	{
 		InitializeEventTriggers ();
-		try {
-			ArduinoAgent.instance.ConnectToEsp ();
-		}catch(SocketException e) {
-			Debug.Log ("Eror");
-			Application.Quit ();
+		StartCoroutine (TryConnectingToEsp ());
+	}
+		
+	IEnumerator TryConnectingToEsp()
+	{
+		if (!ArduinoAgent.instance.IsConnectedWithEsp ()) {
+			try {
+				ArduinoAgent.instance.ConnectToEsp ();
+				statusText.text = "STATUS:CONNECTED";
+			} catch (SocketException e) {
+				Debug.Log ("Error");
+			}
+		} else {
+			statusText.text = "STATUS:DISCONNECTED";
 		}
+		yield return new WaitForSeconds (2);
+		StartCoroutine (TryConnectingToEsp ());
 
 	}
-
+		
 	void InitializeEventTriggers()
 	{
 		EventTrigger upTrigger = upButton.GetComponent<EventTrigger> ();
@@ -99,71 +101,9 @@ public class MainGuiController : MonoBehaviour
 
 	public void Update()
 	{
-		// For debug purposes
-		/*if (Input.mousePresent) {
-			Vector2 pos = Input.mousePosition;
-			if (RectTransformUtility.RectangleContainsScreenPoint(wheel, pos, Camera.main))
-			{
-				Vector2 worldPos = Camera.main.ScreenToWorldPoint(pos);
-				float deltaX = worldPos.x - wheel.position.x;
-				float deltaY = worldPos.y - wheel.position.y;
-				float angle = Mathf.Atan2 (deltaY, deltaX) * Mathf.Rad2Deg;
-				Debug.Log (angle);
-
-				wheel.rotation = Quaternion.Euler (0, 0, angle);
-
-				//CarIndicatorController.instance.TargetRotation = Quaternion.Euler (0, 0, angle);
-			}
-		}*/
-
-		//RotateCarAndWheel ();
-	//	UpdateSpeedGaugeIndicator ();
+		
 	}
-
-	/*void RotateCarAndWheel()
-	{
-		foreach(Touch touch in Input.touches)
-		{
-			Vector2 touchPos = touch.position;
-			// Is pointer/touch point inside wheel?
-			if (RectTransformUtility.RectangleContainsScreenPoint(wheel, touchPos, Camera.main))
-			{
-				Vector2 worldPos = Camera.main.ScreenToWorldPoint(touchPos);
-				float deltaX = worldPos.x - wheel.position.x;
-				float deltaY = worldPos.y - wheel.position.y;
-				float angle = Mathf.Atan2 (deltaY, deltaX) * Mathf.Rad2Deg - 90;
-
-				wheel.rotation = Quaternion.Euler (0, 0, angle);
-
-				CarIndicatorController.instance.TargetRotation = Quaternion.Euler (0, 0, angle);
-			}
-
-		}
-	}
-	void UpdateSpeedGaugeIndicator()
-	{
-		short gaugeDots = 10;
-		float angleBetweenTwoDots = 230.0f / gaugeDots;
-		float maxSpeed = CarIndicatorController.instance.GetTopSpeed();
-		float currentSpeed = CarIndicatorController.instance.GetCurrentVelocity().magnitude;
-		float currentSpeedPercentageOfMaxSpeed = currentSpeed / maxSpeed;
-		float dotsUsed = currentSpeedPercentageOfMaxSpeed * gaugeDots;
-		float pseudoAngleOfIndicator = dotsUsed * angleBetweenTwoDots;
-		float angleOfIndicator = 0;
-		if (currentSpeed != 0) {
-			if (pseudoAngleOfIndicator <= 115) {
-				angleOfIndicator = 115 - pseudoAngleOfIndicator;
-			} else {
-				angleOfIndicator = -pseudoAngleOfIndicator + 115;
-			}
-		} else {
-			angleOfIndicator = 115;
-		}
-
-
-		gaugeIndicatorContainer.rotation = Quaternion.Euler(0, 0, angleOfIndicator);
-		///float tospSpeed = ((force.magnitude / rb.drag) - Time.fixedDeltaTime * force.magnitude) / rb.mass;
-	}*/
+		
 
 	public void OnUpButtonPress(PointerEventData data)
 	{
@@ -204,11 +144,5 @@ public class MainGuiController : MonoBehaviour
 	{
 		ArduinoAgent.instance.StopRotating ();
 	}
-		
-
-	/*public void OnSettingsButtonClick()
-	{
-		SceneManager.LoadScene("SettingsScene");
-	}*/
 
 }

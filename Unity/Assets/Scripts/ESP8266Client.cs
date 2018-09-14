@@ -4,6 +4,7 @@ using UnityEngine;
 using System.IO;
 using System;
 using System.Net.Sockets;
+using UnityEngine.Networking;
 
 // Class responsible for communicating with ESP8266 over WiFi
 public class ESP8266Client
@@ -12,41 +13,43 @@ public class ESP8266Client
 	NetworkStream networkStream;
 	StreamWriter writer;
 	StreamReader reader;
-//	string espIp;
-//	int espPort;
-	bool isConnected;
+	IAsyncResult result;
 
 	public ESP8266Client(string espIp, int espPort)
 	{
-		client = new TcpClient(espIp, espPort);
-		networkStream = client.GetStream();
-		writer = new StreamWriter(networkStream);
-		reader = new StreamReader(networkStream);
-		isConnected = true;
+		client = new TcpClient ();
+		Connect (espIp, espPort);
 	}
 
 	public ESP8266Client()
 	{
-		isConnected = false;
+		client = new TcpClient ();
 	}
 
 	public void Connect(string espIp, int espPort)
 	{
-		if (isConnected) {
-			Disconnect ();
-			isConnected = false;
-		}
 
-		try {
-			client = new TcpClient (espIp, espPort);
+		result = client.BeginConnect (espIp, espPort, null, null);
+		int timeout = 1000;
+		result.AsyncWaitHandle.WaitOne (timeout);
+		if (client.Connected)
+		{
 			networkStream = client.GetStream ();
 			writer = new StreamWriter (networkStream);
 			reader = new StreamReader (networkStream);
-		}catch(SocketException e) {
-			throw e;
+		} 
+		else
+		{
+			throw new SocketException ();
 		}
-
+			
 	}
+
+	public bool IsConnected()
+	{
+		return client.Connected;
+	}
+
 	public void Write(int data)
 	{
 		writer.Write (data);
@@ -83,12 +86,9 @@ public class ESP8266Client
 
 	public void Disconnect()
 	{
-		if (isConnected) {
-			isConnected = false;
-
-			writer.Close ();
-			reader.Close ();
-			client.Close ();
-		}
+		client.EndConnect (result);
+		client.Close ();
+		reader.Close ();
+		writer.Close ();
 	}
 }

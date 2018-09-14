@@ -22,7 +22,7 @@
 
 #define FULL_SPEED 255
 // Lcd can be used for debugging purposes
-//#define LCD_ENABLED
+#define LCD_ENABLED
 
 #ifdef LCD_ENABLED
 LiquidCrystal_PCF8574 lcd(0x38);
@@ -53,7 +53,7 @@ void setup() {
 
 void loop() {
   if (Serial.available()) {
-    String data = Serial.readStringUntil('\n');
+    String data = Serial.readString();
 #ifdef LCD_ENABLED
     lcd.clear();
     lcd.print(data);
@@ -148,6 +148,7 @@ void stop() {
   digitalWrite(LEFT_MOTOR_B, LOW);
   digitalWrite(RIGHT_MOTOR_A, LOW);
   digitalWrite(RIGHT_MOTOR_B, LOW);
+  
   isMovingForward = false;
   isMovingBackwards = false;
 }

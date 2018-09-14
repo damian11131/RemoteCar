@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <WebSocketServer.h>
 
 #define SSID "ESP"
 #define PORT 80
@@ -8,10 +9,11 @@
 #define CONNECTION_LED 2
 
 WiFiServer server(PORT);
+WiFiClient client;
 
 void setup() {
   pinMode(CONNECTION_LED, OUTPUT);
-  
+
   Serial.begin(BAUD_RATE);
   WiFi.mode(WIFI_AP);
   WiFi.softAP(SSID);
@@ -19,17 +21,28 @@ void setup() {
 }
 
 void loop() {
-  WiFiClient client = server.available();
+  if(WiFi.softAPgetStationNum() != 0) {
+    digitalWrite(CONNECTION_LED, HIGH);  
+  }
+  else {
+    digitalWrite(CONNECTION_LED, LOW);  
+  } 
+  
+  client = server.available();
+
   if (client) {
-    digitalWrite(CONNECTION_LED, HIGH);
     while (client.connected()) {
-      while (client.available()) {
+      if (WiFi.softAPgetStationNum() == 0) {
+        break;
+      }
+
+      if (client.available()) {
         String data = client.readStringUntil('\n');
-        delay(10);
         Serial.print(data);
       }
     }
-    digitalWrite(CONNECTION_LED, LOW);
+    
+    delay(100);
     client.stop();
   }
 }
