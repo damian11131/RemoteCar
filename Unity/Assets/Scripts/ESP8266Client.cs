@@ -5,6 +5,7 @@ using System.IO;
 using System;
 using System.Net.Sockets;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 // Class responsible for communicating with ESP8266 over WiFi
 public class ESP8266Client
@@ -12,8 +13,7 @@ public class ESP8266Client
 	TcpClient client;
 	NetworkStream networkStream;
 	StreamWriter writer;
-	StreamReader reader;
-	IAsyncResult result;
+    IAsyncResult result;
 
 	public ESP8266Client(string espIp, int espPort)
 	{
@@ -28,21 +28,10 @@ public class ESP8266Client
 
 	public void Connect(string espIp, int espPort)
 	{
-
-		result = client.BeginConnect (espIp, espPort, null, null);
-		int timeout = 1000;
-		result.AsyncWaitHandle.WaitOne (timeout);
-		if (client.Connected)
-		{
-			networkStream = client.GetStream ();
-			writer = new StreamWriter (networkStream);
-			reader = new StreamReader (networkStream);
-		} 
-		else
-		{
-			throw new SocketException ();
-		}
-			
+        result = client.BeginConnect(espIp, espPort, null, null);
+        result.AsyncWaitHandle.WaitOne(50);
+		networkStream = client.GetStream ();
+		writer = new StreamWriter (networkStream);
 	}
 
 	public bool IsConnected()
@@ -74,21 +63,15 @@ public class ESP8266Client
 		writer.Flush ();
 	}
 
-	public string ReadLine()
+	public byte ReadByte()
 	{
-		return reader.ReadLine ();
-	}
-
-	public int Read()
-	{
-		return reader.Read ();
+        return (byte) networkStream.ReadByte();
 	}
 
 	public void Disconnect()
-	{
-		client.EndConnect (result);
+    {
+        client.EndConnect(result);
 		client.Close ();
-		reader.Close ();
 		writer.Close ();
 	}
 }

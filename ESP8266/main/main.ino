@@ -1,5 +1,4 @@
 #include <ESP8266WiFi.h>
-#include <WebSocketServer.h>
 
 #define SSID "ESP"
 #define PORT 80
@@ -36,6 +35,11 @@ void loop() {
         break;
       }
 
+      if(Serial.available()) {
+        byte readVoltage = Serial.read();
+        client.write(readVoltage);  
+      }
+      
       if (client.available()) {
         String data = client.readStringUntil('\n');
         Serial.print(data);

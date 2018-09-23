@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Net.Sockets;
 using System;
+using System.Threading.Tasks;
 
 public class MainGuiController : MonoBehaviour
 {
@@ -15,31 +16,64 @@ public class MainGuiController : MonoBehaviour
 	public RectTransform leftButton;
 	public RectTransform rightButton;
 	public TextMeshProUGUI statusText;
+    public TextMeshProUGUI fuelText;
 
-	public void Start() 
-	{
-		InitializeEventTriggers ();
-		StartCoroutine (TryConnectingToEsp ());
-	}
-		
-	IEnumerator TryConnectingToEsp()
-	{
-		if (!ArduinoAgent.instance.IsConnectedWithEsp ()) {
-			try {
-				ArduinoAgent.instance.ConnectToEsp ();
-				statusText.text = "STATUS:CONNECTED";
-			} catch (SocketException e) {
-				Debug.Log ("Error");
-			}
-		} else {
-			statusText.text = "STATUS:DISCONNECTED";
-		}
-		yield return new WaitForSeconds (2);
-		StartCoroutine (TryConnectingToEsp ());
+    ArduinoAgent arduinoAgent;
 
-	}
-		
-	void InitializeEventTriggers()
+    public void Start()
+    {
+        InitializeEventTriggers();
+
+        arduinoAgent = new ArduinoAgent();
+
+        InvokeRepeating("ExecuteAtInterval", 0, 3);
+    }
+
+
+    void ExecuteAtInterval()
+    {
+        bool connected = arduinoAgent.CheckEspConnection();
+        UpdateStatusText(connected);
+        if (!connected)
+        {
+            TryConnectingToEsp();
+        }
+        UpdateFuelText();
+    }
+
+    void UpdateStatusText(bool connected)
+    {
+        statusText.text = connected ? "STATUS:CONNECTED" : "STATUS:DISCONNECTED";
+        if (connected)
+        {
+            statusText.text = "STATUS:CONNECTED";
+        }
+        else
+        {
+            statusText.text = "STATUS:DISCONNECTED";
+        }
+    }
+
+    void TryConnectingToEsp()
+    {
+        try
+        {
+            arduinoAgent.ConnectToEsp();
+        }
+        catch (SocketException e)
+        {
+
+        }
+    }
+
+    void UpdateFuelText()
+    {
+        byte fuel = arduinoAgent.ReadVoltagePercentage();
+        fuelText.text = "FUEL:" + fuel.ToString() + "%";
+
+    }
+
+    void InitializeEventTriggers()
 	{
 		EventTrigger upTrigger = upButton.GetComponent<EventTrigger> ();
 		EventTrigger.Entry upEnterEntry = new EventTrigger.Entry ();
@@ -103,46 +137,47 @@ public class MainGuiController : MonoBehaviour
 	{
 		
 	}
-		
 
-	public void OnUpButtonPress(PointerEventData data)
+
+    public async void OnUpButtonPress(PointerEventData data)
 	{
-		ArduinoAgent.instance.MoveForward ();
+        UpdateFuelText();
+		arduinoAgent.MoveForward ();
 	}
 
 	public void OnUpButtonRelease(PointerEventData data)
 	{
-		ArduinoAgent.instance.Stop ();
+		arduinoAgent.Stop ();
 	}
 
 	public void OnDownButtonPress(PointerEventData data)
 	{
-		ArduinoAgent.instance.MoveBackwards ();
+		arduinoAgent.MoveBackwards ();
 	}
 
 	public void OnDownButtonRelease(PointerEventData data)
 	{
-		ArduinoAgent.instance.Stop ();
+		arduinoAgent.Stop ();
 	}
 
 	public void OnLeftButtonPress(PointerEventData data)
 	{
-		ArduinoAgent.instance.RotateLeft();
+		arduinoAgent.RotateLeft();
 	}
 
 	public void OnLeftButtonRelease(PointerEventData data)
 	{
-		ArduinoAgent.instance.StopRotating ();
+		arduinoAgent.StopRotating ();
 	}
 
 	public void OnRightButtonPress(PointerEventData data)
 	{
-		ArduinoAgent.instance.RotateRight ();
+		arduinoAgent.RotateRight ();
 	}
 
 	public void OnRightButtonRelease(PointerEventData data)
 	{
-		ArduinoAgent.instance.StopRotating ();
+		arduinoAgent.StopRotating ();
 	}
 
 }

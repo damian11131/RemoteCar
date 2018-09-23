@@ -4,9 +4,11 @@ using UnityEngine;
 using System.Net.Sockets;
 using System.IO;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 // Class communicating with Arduino using ESP8266espClient 
-public class ArduinoAgent : MonoBehaviour
+public class ArduinoAgent
 {
 	ESP8266Client espClient;
 
@@ -18,21 +20,18 @@ public class ArduinoAgent : MonoBehaviour
 		public static readonly string RotateRight = "RR";
 		public static readonly string RotateLeft = "RL";
 		public static readonly string StopRotating = "SR";
+        public static readonly string MeasureVoltage = "MV";
 	}
 
-	public static ArduinoAgent instance;
 
 	readonly string DefaultEspIp = "192.168.4.1";
 	readonly int DefaultEspPort = 80;
+    readonly float ArduinoBatteryInitialVoltage = 7.5f;
 
-	#region Singleton
-	void Awake()
-	{
-		instance = this;
-		DontDestroyOnLoad (gameObject);
-		espClient = new ESP8266Client ();
-	}
-	#endregion
+    public ArduinoAgent()
+    {
+        espClient = new ESP8266Client();
+    }
 
 	public void ConnectToEsp(string ip, int port)
 	{
@@ -53,6 +52,11 @@ public class ArduinoAgent : MonoBehaviour
 		}
 
 	}
+
+    public bool CheckEspConnection()
+    {
+        return espClient.IsConnected();
+    }
 
 	public bool IsConnectedWithEsp()
 	{
@@ -85,13 +89,23 @@ public class ArduinoAgent : MonoBehaviour
 		espClient.Writeln (Commands.RotateRight);
 	}
 
+	
 	public void StopRotating()
-	{
+    {
 		espClient.Writeln (Commands.StopRotating);
 	}
 
-	public void MoveBackwards()
-	{
-		espClient.Writeln (Commands.MoveBackwards);
-	}
+    public void MoveBackwards()
+    {
+        espClient.Writeln(Commands.MoveBackwards);
+    }
+
+    public byte ReadVoltagePercentage()
+    {
+        espClient.Writeln(Commands.MeasureVoltage);
+        byte res = espClient.ReadByte();
+        return res;
+    }
+
+
 }
